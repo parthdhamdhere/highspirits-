@@ -1,0 +1,1 @@
+import {config,validateConfig} from './config';import {database} from './db';import {runJobs} from './jobs';validateConfig(config);if(!config.databaseUrl)throw new Error('Use the embedded server worker for local PGlite; standalone workers require PostgreSQL');const db=await database(config.databaseUrl);try{await runJobs(db,config);}finally{await db.close();}

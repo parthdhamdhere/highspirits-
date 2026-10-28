@@ -1,0 +1,21 @@
+{
+  "name": "high-spirits",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "packages/contracts"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c cyan,magenta \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+    "build": "npm run typecheck && npm run build -w frontend",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test -w backend"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.0",
+    "concurrently": "^9.2.1",
+    "prettier": "^3.9.10",
+    "typescript": "^5.9.3"
+  }
+}

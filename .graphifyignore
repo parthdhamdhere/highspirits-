@@ -1,0 +1,15 @@
+.agents/
+.git/
+node_modules/
+.venv/
+dist/
+build/
+graphify-out/
+.next/
+.data/
+tmp/
+.taste-skill/
+.impeccable/
+package-lock.json
+*.md
+*.pdf
