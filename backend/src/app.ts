@@ -18,7 +18,9 @@ import {events,orders,guestView} from './views';
 declare module 'fastify'{interface FastifyRequest{user:SessionUser|null;csrf:string|null;rawBody?:string}}
 export async function buildApp(db:Database,c:Config){
  const app=Fastify({logger:c.production,bodyLimit:1024*1024,trustProxy:c.production?(_address,hop)=>hop<1:false});
- await app.register(cookie);await app.register(cors,{origin:c.origin,credentials:true});await app.register(helmet,{contentSecurityPolicy:false});await app.register(multipart,{limits:{fileSize:5*1024*1024,files:1}});
+ const allowedOrigins=c.origin.split(',').map(o=>o.trim().replace(/\/$/,'')).filter(Boolean);
+ const originAllowed=(origin?:string)=>{if(!origin)return false;const clean=origin.replace(/\/$/,'');if(allowedOrigins.includes(clean))return true;if((!c.production||c.payments==='demo')&&(clean.endsWith('.vercel.app')||clean.includes('localhost')||clean.includes('127.0.0.1')))return true;return false;};
+ await app.register(cookie);await app.register(cors,{origin:(origin,cb)=>{if(!origin||originAllowed(origin))return cb(null,true);cb(null,false);},credentials:true});await app.register(helmet,{contentSecurityPolicy:false});await app.register(multipart,{limits:{fileSize:5*1024*1024,files:1}});
  app.decorateRequest('user',null);app.decorateRequest('csrf',null);
  app.removeContentTypeParser('application/json');app.addContentTypeParser('application/json',{parseAs:'string'},(req,body,done)=>{req.rawBody=body as string;try{done(null,JSON.parse(body as string));}catch{done(new ApiError(400,'INVALID_JSON','Invalid JSON body'));}});
  app.setErrorHandler((error,req,reply)=>{if(error instanceof ZodError)return reply.code(400).send({error:{code:'VALIDATION',message:error.issues.map(i=>i.message).join('; ')}});if((error as any).code==='23505')return reply.code(409).send({error:{code:'DUPLICATE',message:'This entry already exists. Check for a duplicate email or phone number.'}});const status=(error as any).statusCode||500;if(status>=500)req.log.error(error);return reply.code(status).send({error:{code:error instanceof ApiError?error.code:'REQUEST_FAILED',message:status>=500&&!(error instanceof ApiError)?'The request could not be completed. Please try again.':(error as Error).message}});});
@@ -26,7 +28,7 @@ export async function buildApp(db:Database,c:Config){
  if(req.url.startsWith('/api/'))reply.header('Cache-Control','no-store');
  const raw=req.cookies.hs_session;if(raw&&!['/api/v1/events','/api/v1/config'].includes(req.url)&&!req.url.startsWith('/api/v1/events/')){const s=(await db.query('SELECT * FROM sessions WHERE token_hash=$1 AND expires_at>now()',[hash(raw)])).rows[0];if(s){const p=(await db.query(s.principal_type==='staff'?"SELECT id,name,email,role,status FROM staff WHERE id=$1 AND status='active'":"SELECT id,name,email,phone,dob FROM users WHERE id=$1 AND deleted_at IS NULL",[s.principal_id])).rows[0];if(p){req.user={id:p.id,name:p.name,email:p.email,role:s.principal_type==='staff'?p.role:'customer',phone:p.phone,dob:p.dob?new Date(p.dob).toISOString().slice(0,10):undefined};req.csrf=s.csrf;}}}
  if(['POST','PUT','PATCH','DELETE'].includes(req.method)&&req.url!=='/api/v1/payments/webhook'){
- const origin=req.headers.origin;if(origin!==c.origin)fail(403,'ORIGIN','Request origin is not allowed');
+ const origin=req.headers.origin;if(!originAllowed(origin))fail(403,'ORIGIN','Request origin is not allowed');
  const expected=req.csrf||req.cookies.hs_csrf;if(!expected||req.headers['x-csrf-token']!==expected)fail(403,'CSRF','Your session changed. Refresh and try again.');
  }
  });
