@@ -21,3 +21,13 @@ CREATE INDEX IF NOT EXISTS holds_user ON holds(user_id,tier_id);
 CREATE INDEX IF NOT EXISTS orders_user ON orders(user_id);
 CREATE INDEX IF NOT EXISTS orders_event ON orders(event_id);
 CREATE INDEX IF NOT EXISTS sessions_expiry ON sessions(expires_at);
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash text;
+CREATE TABLE IF NOT EXISTS content_images (id text PRIMARY KEY, section text NOT NULL CHECK(section IN ('gallery','menu')), title text NOT NULL, image_url text NOT NULL, caption text NOT NULL DEFAULT '', sort_order int NOT NULL DEFAULT 0, published boolean NOT NULL DEFAULT false);
+
+ALTER TABLE users ALTER COLUMN dob DROP NOT NULL;
+
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS reconciled_at timestamptz;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS reconciliation_error text;
+UPDATE users SET dob=NULL,password_hash=NULL WHERE deleted_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS orders_reconciliation ON orders(reconciled_at,created_at) WHERE hold_id IS NOT NULL;

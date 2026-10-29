@@ -9,3 +9,28 @@ coverage/
 *.tsbuildinfo
 .impeccable/
 .taste-skill/
+.render-tools/
+assets/sangria/renders/
+assets/sangria/*.blend1
+assets/sangria/renders-hd/
+.next-audit/
+
+# OS files
+.DS_Store
+**/.DS_Store
+Thumbs.db
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Graphify AST cache
+graphify-out/cache/
+
+# Large binaries & installers
+*.dmg
+*.pkg
+*.iso
+

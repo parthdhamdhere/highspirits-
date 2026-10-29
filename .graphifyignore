@@ -13,3 +13,8 @@ tmp/
 package-lock.json
 *.md
 *.pdf
+
+.render-tools/
+assets/sangria/renders/
+
+assets/sangria/renders-hd/

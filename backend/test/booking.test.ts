@@ -29,3 +29,25 @@ test('promoter sees only own guests with masked phone and no revenue',async()=>{
 test('guest duplicates are rejected, CSV has BOM and audit entry',async()=>{const headers=await login();const duplicate=await app.inject({method:'POST',url:'/api/v1/manage/guestlist',headers,payload:{eventId:'demo-event-1',name:'Duplicate',phone:'+919111111111',partyType:'female',plusCount:0,notes:''}});assert.equal(duplicate.statusCode,409);const exported=await app.inject({url:'/api/v1/manage/export/guestlist?eventId=demo-event-1',headers});assert.equal(exported.statusCode,200);assert.equal(exported.body.charCodeAt(0),0xfeff);assert.ok(exported.body.includes("'+919111111111"));assert.ok((await db.query("SELECT id FROM audit_log WHERE action='export'")).rows.length);});
 test('webhook rejects unsigned payload and altered raw body',async()=>{const r=await app.inject({method:'POST',url:'/api/v1/payments/webhook',payload:{event:'payment.captured'}});assert.equal(r.statusCode,400);const body='{"a":1}';const signature=createHmac('sha256','secret').update(body).digest('hex');assert.ok(signatureValid(body,signature,'secret'));assert.ok(!signatureValid('{"a":2}',signature,'secret'));});
 test('age boundary, paise rounding and spreadsheet escaping',()=>{assert.ok(isAdult('2005-10-28',new Date('2026-10-28T10:00:00Z')));assert.ok(!isAdult('2005-10-29',new Date('2026-10-28T10:00:00Z')));assert.ok(!isAdult('2000-02-31'));assert.deepEqual(priceBreakdown(9999,2,'table',{tableCoverPaise:10000,platformFeePaise:0,gstBasisPoints:1800,gstConfirmed:true,businessGstin:'',tablePaymentMode:'cover'}),{subtotalPaise:19998,coverPaise:20000,feePaise:0,gstPaise:7200,totalPaise:47198});assert.ok(csv([['=HYPERLINK("x")','  @SUM(1)','normal']]).includes("'  @SUM"));});
+
+test('gallery and menu CRUD enforce roles and draft visibility',async()=>{
+ await db.query('DELETE FROM rate_limits');
+ const headers=await login('manager');const promoter=await login('promoter');
+ for(const section of ['gallery','menu']){
+ const payload={section,title:'Test photo',imageUrl:'/media/11111111-1111-1111-1111-111111111111.jpg',caption:'A night at High',sortOrder:1,published:false};
+ assert.equal((await app.inject({method:'POST',url:'/api/v1/manage/content',headers:promoter,payload})).statusCode,403);
+ const created=await app.inject({method:'POST',url:'/api/v1/manage/content',headers,payload});assert.equal(created.statusCode,200,created.body);const id=created.json().id;
+ assert.ok(!(await app.inject('/api/v1/content/'+section)).json().items.some((i:any)=>i.id===id));
+ assert.equal((await app.inject({method:'PATCH',url:'/api/v1/manage/content/'+id,headers,payload:{...payload,published:true}})).statusCode,200);
+ assert.ok((await app.inject('/api/v1/content/'+section)).json().items.some((i:any)=>i.id===id));
+ assert.equal((await app.inject({method:'DELETE',url:'/api/v1/manage/content/'+id,headers})).statusCode,200);
+ }
+});
+test('customer password signup and login store a hash and reject wrong credentials',async()=>{
+ const initial=await app.inject('/api/v1/session');const headers={origin:c.origin,cookie:initial.cookies.map(c=>`${c.name}=${c.value}`).join('; '),'x-csrf-token':initial.json().csrfToken};
+ const email=randomUUID()+'@example.com',password='TestPassword2026!';
+ const signed=await app.inject({method:'POST',url:'/api/v1/auth/customer/password',headers,payload:{email,password,register:true,consent:true}});assert.equal(signed.statusCode,200,signed.body);
+ const stored=(await db.query('SELECT password_hash,dob FROM users WHERE email=$1',[email])).rows[0];assert.notEqual(stored.password_hash,password);assert.equal(stored.dob,null);
+ assert.equal((await app.inject({method:'POST',url:'/api/v1/auth/customer/password',headers,payload:{email,password:'WrongPassword'}})).statusCode,401);
+ assert.equal((await app.inject({method:'POST',url:'/api/v1/auth/customer/password',headers,payload:{email,password}})).statusCode,200);
+});

@@ -1,4 +1,4 @@
-# Provisional design — highspirts cafe, Pune
+# Provisional design — The High Spirits Cafe, Pune
 
 User approved proceeding while brand assets arrive. Preserve the supplied wireframe journeys and all updated product rules.
 
@@ -9,3 +9,9 @@ Public first viewport answers: which night is next, when doors open, what entry 
 Use fluid layouts, equal outer gutters, 44px controls, visible focus, labelled inputs, inline errors, and reduced-motion support. Public headings stay within two lines at ordinary widths. UI/UX Pro Max's accessible checkout/search guidance supplies focus, error and state rules; Impeccable supplies craft review. No unnecessary dashboard charts, made-up growth, gradients, glass, or decorative icon cards.
 
 Sample event names and typographic poster treatments are development content. The upload workflow accepts final posters; the public menu/gallery explain their pending content rather than inventing items or photographs.
+
+Confirmed update: official logo supplied; public styling draws on red/yellow/blue concert posters and dark nightlife imagery. Customer and staff login currently use email/password; OTP is deferred. Admins and managers manage gallery and menu images with draft previews and publishing.
+
+Hero refinement: fixed home navigation returns to charcoal (#101012), with a compact 52px logo and 6px vertical padding. The dark-use logo removes the blue square backdrop while retaining its recognizable lettering. The scroll hero retains its original dark background, unblended film, warm text and light booking button.
+
+Home navigation appears only with the completed scroll hero, uses a transparent background, and scrolls out with that hero stage instead of staying fixed over subsequent sections.

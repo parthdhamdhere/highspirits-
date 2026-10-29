@@ -10,7 +10,8 @@
     "dev": "concurrently -n api,web -c cyan,magenta \"npm run dev -w backend\" \"npm run dev -w frontend\"",
     "build": "npm run typecheck && npm run build -w frontend",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "test": "npm run test -w backend"
+    "test": "npm run test --workspaces --if-present",
+    "test:system": "node tests/run-system.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.19.0",
