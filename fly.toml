@@ -1,0 +1,25 @@
+app = "highspirits-api"
+primary_region = "bom"
+
+[build]
+  dockerfile = "Dockerfile.backend"
+
+[env]
+  PORT = "4000"
+  HOST = "0.0.0.0"
+  NODE_ENV = "staging"
+  PAYMENT_MODE = "demo"
+  SEED_DEMO = "true"
+
+[http_service]
+  internal_port = 4000
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
